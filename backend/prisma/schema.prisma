@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  HR
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  ABSENT
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  employee     Employee?
+
+  @@map("users")
+}
+
+model Employee {
+  id            String         @id @default(uuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id])
+  name          String
+  departmentId  String
+  department    Department     @relation(fields: [departmentId], references: [id])
+  positionId    String
+  position      Position       @relation(fields: [positionId], references: [id])
+  managerId     String?
+  manager       Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
+  subordinates  Employee[]     @relation("EmployeeManager")
+  joinDate      DateTime
+  status        EmployeeStatus @default(ACTIVE)
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[] @relation("EmployeeLeaveRequests")
+  approvals     LeaveRequest[] @relation("ApprovedByManager")
+  leaveBalances LeaveBalance[]
+  payrolls      Payroll[]
+
+  @@map("employees")
+}
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String
+  employees Employee[]
+  positions Position[]
+
+  @@map("departments")
+}
+
+model Position {
+  id           String     @id @default(uuid())
+  title        String
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  employees    Employee[]
+
+  @@map("positions")
+}
+
+model Attendance {
+  id         String            @id @default(uuid())
+  employeeId String
+  employee   Employee          @relation(fields: [employeeId], references: [id])
+  date       DateTime
+  clockIn    DateTime?
+  clockOut   DateTime?
+  status     AttendanceStatus  @default(ON_TIME)
+
+  @@unique([employeeId, date])
+  @@map("attendances")
+}
+
+model LeaveType {
+  id            String         @id @default(uuid())
+  name          String
+  defaultQty    Int
+  leaveRequests LeaveRequest[]
+  leaveBalances LeaveBalance[]
+
+  @@map("leave_types")
+}
+
+model LeaveRequest {
+  id          String      @id @default(uuid())
+  employeeId  String
+  employee    Employee    @relation("EmployeeLeaveRequests", fields: [employeeId], references: [id])
+  leaveTypeId String
+  leaveType   LeaveType   @relation(fields: [leaveTypeId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  status      LeaveStatus @default(PENDING)
+  approvedBy  String?
+  approver    Employee?   @relation("ApprovedByManager", fields: [approvedBy], references: [id])
+  createdAt   DateTime    @default(now())
+
+  @@map("leave_requests")
+}
+
+model LeaveBalance {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  leaveTypeId String
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
+  balance     Int
+  year        Int
+
+  @@unique([employeeId, leaveTypeId, year])
+  @@map("leave_balances")
+}
+
+model Payroll {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  period      String
+  baseSalary  Decimal
+  deduction   Decimal  @default(0)
+  total       Decimal
+  generatedAt DateTime @default(now())
+
+  @@map("payrolls")
+}

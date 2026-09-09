@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: hris-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hris_user
+      POSTGRES_PASSWORD: hris_password
+      POSTGRES_DB: hris_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - hris_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  hris_postgres_data:
