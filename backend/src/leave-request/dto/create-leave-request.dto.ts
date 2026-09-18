@@ -1,0 +1,12 @@
+import { IsUUID, IsDateString } from 'class-validator';
+
+export class CreateLeaveRequestDto {
+  @IsUUID()
+  leaveTypeId: string;
+
+  @IsDateString()
+  startDate: string;
+
+  @IsDateString()
+  endDate: string;
+}
