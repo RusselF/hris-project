@@ -10,10 +10,11 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { LeaveTypeModule } from './leave-type/leave-type.module';
 import { LeaveBalanceModule } from './leave-balance/leave-balance.module';
 import { LeaveRequestModule } from './leave-request/leave-request.module';
+import { PayrollModule } from './payroll/payroll.module';
 
 
 @Module({
-  imports: [AuthModule, PrismaModule, DepartmentModule, PositionModule, EmployeeModule, AttendanceModule, LeaveTypeModule, LeaveBalanceModule, LeaveRequestModule],
+  imports: [AuthModule, PrismaModule, DepartmentModule, PositionModule, EmployeeModule, AttendanceModule, LeaveTypeModule, LeaveBalanceModule, LeaveRequestModule, PayrollModule],
   controllers: [AppController],
   providers: [AppService],
 })
