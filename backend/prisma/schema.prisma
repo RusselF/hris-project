@@ -105,7 +105,7 @@ model Attendance {
 
 model LeaveType {
   id            String         @id @default(uuid())
-  name          String
+  name          String         @unique
   defaultQty    Int
   leaveRequests LeaveRequest[]
   leaveBalances LeaveBalance[]

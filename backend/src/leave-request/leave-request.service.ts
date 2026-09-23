@@ -62,46 +62,60 @@ export class LeaveRequestService {
 
   async approve(requestId: string, managerEmployeeId: string) {
     const request = await this.prisma.leaveRequest.findUnique({
-        where: { id: requestId },
-        include: { employee: true },
+      where: { id: requestId },
+      include: { employee: true },
     });
 
     if (!request) {
-        throw new NotFoundException('Leave request tidak ditemukan');
+      throw new NotFoundException('Leave request tidak ditemukan');
     }
 
-    // Pastikan manager cuma bisa approve pengajuan anak buahnya sendiri
     if (request.employee.managerId !== managerEmployeeId) {
-        throw new ForbiddenException('Kamu tidak berwenang approve pengajuan ini');
+      throw new ForbiddenException('Kamu tidak berwenang approve pengajuan ini');
     }
 
     if (request.status !== 'PENDING') {
-        throw new BadRequestException('Pengajuan ini sudah diproses sebelumnya');
+      throw new BadRequestException('Pengajuan ini sudah diproses sebelumnya');
     }
 
     const year = request.startDate.getFullYear();
     const days = countDays(request.startDate, request.endDate);
 
+    // Cek ulang saldo saat ini SEBELUM approve (bisa saja sudah berubah sejak pengajuan dibuat)
+    const balance = await this.prisma.leaveBalance.findUnique({
+      where: {
+        employeeId_leaveTypeId_year: {
+          employeeId: request.employeeId,
+          leaveTypeId: request.leaveTypeId,
+          year,
+        },
+      },
+    });
+
+    if (!balance || balance.balance < days) {
+      throw new BadRequestException('Saldo cuti employee tidak lagi mencukupi untuk pengajuan ini');
+    }
+
     return this.prisma.$transaction(async (tx) => {
-        const updated = await tx.leaveRequest.update({
+      const updated = await tx.leaveRequest.update({
         where: { id: requestId },
         data: { status: 'APPROVED', approvedBy: managerEmployeeId },
-        });
+      });
 
-        await tx.leaveBalance.update({
+      await tx.leaveBalance.update({
         where: {
-            employeeId_leaveTypeId_year: {
+          employeeId_leaveTypeId_year: {
             employeeId: request.employeeId,
             leaveTypeId: request.leaveTypeId,
             year,
-            },
+          },
         },
         data: { balance: { decrement: days } },
-        });
+      });
 
-        return updated;
+      return updated;
     });
-    }
+  }
 
     async reject(requestId: string, managerEmployeeId: string) {
         const request = await this.prisma.leaveRequest.findUnique({

@@ -4,8 +4,14 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true}));
-  await app.listen(process.env.PORT ?? 3001);
-  console.log(`Application is Running on: ${await app.getUrl()}`);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  });
+
+  await app.listen(3001);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();

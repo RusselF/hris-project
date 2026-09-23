@@ -23,7 +23,7 @@ export class EmployeeService {
         data: {
           email: dto.email,
           passwordHash,
-          role: 'EMPLOYEE',
+          role: dto.role ?? 'EMPLOYEE',
         },
       });
 

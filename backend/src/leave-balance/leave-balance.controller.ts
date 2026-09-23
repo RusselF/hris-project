@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import type { Request as ExpressRequest } from 'express';
 import { LeaveBalanceService } from './leave-balance.service';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -18,6 +18,9 @@ export class LeaveBalanceController {
   @Get('my-balance')
   myBalance(@Request() req: ExpressRequest) {
     const employeeId = (req.user as any)?.employeeId;
+    if (!employeeId) {
+      throw new ForbiddenException('Akun kamu belum terhubung ke data employee');
+    }
     const year = new Date().getFullYear();
     return this.leaveBalanceService.findMyBalances(employeeId, year);
   }

@@ -1,7 +1,12 @@
-import { IsNotEmpty, IsUUID, IsDateString, IsOptional, IsEmail, MinLength } from 'class-validator';
+import { IsNotEmpty, IsUUID, IsDateString, IsOptional, IsEmail, MinLength, IsEnum } from 'class-validator';
+
+enum UserRole {
+  EMPLOYEE = 'EMPLOYEE',
+  MANAGER = 'MANAGER',
+  HR = 'HR',
+}
 
 export class CreateEmployeeDto {
-  // Data untuk bikin akun User baru sekaligus
   @IsEmail()
   email: string;
 
@@ -23,4 +28,8 @@ export class CreateEmployeeDto {
 
   @IsDateString()
   joinDate: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole; // default EMPLOYEE kalau tidak diisi
 }
